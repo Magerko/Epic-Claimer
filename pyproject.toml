@@ -1,0 +1,52 @@
+[project]
+name = "epic-awesome-gamer"
+version = "0.4.1"
+dependencies = [
+    "apscheduler>=3.11.0",
+    "pydantic-settings>=2.8.1",
+    "celery[redis]>=5.4.0",
+    "hcaptcha-challenger[camoufox]>=0.18.10",
+]
+requires-python = ">=3.12,<=3.13"
+authors = [
+    { name = "QIN2DIM", email = "yaoqinse@gmail.com" }
+]
+description = "🍷 Gracefully claim weekly free games from Epic Store."
+readme = "README.md"
+license = "GPL-3.0-or-later"
+keywords = ["epic", "epic-awesome-gamer", "epic-games-store"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+    "Topic :: Software Development",
+]
+
+[project.urls]
+Homepage = "https://github.com/QIN2DIM/epic-awesome-gamer"
+Documentation = "https://github.com/QIN2DIM/epic-awesome-gamer"
+Repository = "https://github.com/QIN2DIM/epic-awesome-gamer.git"
+Issues = "https://github.com/QIN2DIM/epic-awesome-gamer/issues"
+Changelog = "https://github.com/QIN2DIM/epic-awesome-gamer/blob/master/CHANGELOG.md"
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312", "py313"]
+skip-string-normalization = true
+
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "celery-types>=0.23.0",
+    "pytest>=8.3.5",
+    "ruff>=0.12.3",
+]

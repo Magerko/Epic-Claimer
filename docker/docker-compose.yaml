@@ -1,0 +1,22 @@
+name: epic-awesome-gamer
+
+services:
+  epic-awesome-gamer:
+#    build:
+#      context: ..
+#      dockerfile: docker/Dockerfile
+    image: ghcr.io/qin2dim/epic-awesome-gamer:latest
+    restart: unless-stopped
+    container_name: epic-awesome-gamer
+    env_file:
+      - .env
+    volumes:
+      - "./volumes/:/app/app/volumes/"
+    entrypoint: [ "/usr/bin/tini", "--" ]
+    command: xvfb-run --auto-servernum --server-num=1 --server-args='-screen 0, 1920x1080x24' uv run app/deploy.py
+
+    # Limit maximum memory to 4GB to prevent C++ memory leaks
+    mem_limit: 4g
+
+    # Allocate enough shared memory for Playwright/Chrome to prevent crashes or slowdowns
+    shm_size: '2gb'
