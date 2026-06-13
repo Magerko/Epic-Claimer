@@ -1,13 +1,9 @@
 <div align="center">
-    <h1> EPIC AWESOME GAMER</h1>
+    <h1> EPIC-CLAIMER</h1>
     <p>🍷 Изящно забирайте еженедельные бесплатные игры из Epic Games Store.</p>
     <img src="https://img.shields.io/static/v1?message=reference&color=blue&style=for-the-badge&logo=micropython&label=python">
-    <img src="https://img.shields.io/github/license/QIN2DIM/epic-awesome-gamer?style=for-the-badge">
-    <a href="https://hub.docker.com/r/ech0sec/awesome-epic"><img src="https://img.shields.io/docker/pulls/ech0sec/awesome-epic?color=green&style=for-the-badge"></a>
-	<a href=""><img src="https://img.shields.io/github/actions/workflow/status/QIN2DIM/epic-awesome-gamer/ci_docker_fish.yaml?style=for-the-badge"></a>
-	<br>
-    	<a href="https://discord.gg/KA66wZBQ"><img alt="Discord" src="https://img.shields.io/discord/978108215499816980?style=social&logo=discord&label=echosec"></a>
-	<a href="https://t.me/+Wdtxnn1yxU5jMmY5"><img src="https://img.shields.io/static/v1?style=social&logo=telegram&label=chat&message=studio" ></a>
+    <img src="https://img.shields.io/github/license/Magerko/Epic-Claimer?style=for-the-badge">
+	<a href="https://github.com/Magerko/Epic-Claimer/actions"><img src="https://img.shields.io/github/actions/workflow/status/Magerko/Epic-Claimer/ci_docker_fish.yaml?style=for-the-badge"></a>
 	<br>
 	<br>
 </div>
@@ -17,7 +13,7 @@
 
 ## Введение 👋
 
-[Epic Awesome Gamer](https://github.com/QIN2DIM/epic-awesome-gamer) помогает игрокам изящно забирать бесплатные игры. Встроенный AI-модуль [hcaptcha-challenger](https://github.com/QIN2DIM/hcaptcha-challenger) самостоятельно проходит проверки «человек / робот» (hCaptcha).
+[Epic-Claimer](https://github.com/Magerko/Epic-Claimer) помогает игрокам изящно забирать бесплатные игры. Встроенный AI-модуль [hcaptcha-challenger](https://github.com/QIN2DIM/hcaptcha-challenger) самостоятельно проходит проверки «человек / робот» (hCaptcha).
 
 ## Возможности
 
@@ -41,8 +37,8 @@
 Сначала клонируйте репозиторий в своё окружение и перейдите в рабочий каталог `docker`:
 
 ```bash
-git clone https://github.com/QIN2DIM/epic-awesome-gamer.git
-cd epic-awesome-gamer/docker
+git clone https://github.com/Magerko/Epic-Claimer.git
+cd Epic-Claimer/docker
 ```
 
 #### 2. Настройте переменные окружения
@@ -67,7 +63,7 @@ chmod +x ./start.sh
 ./start.sh
 ```
 
-Разумеется, можно использовать и команду `docker compose` напрямую — это даёт больше контроля над жизненным циклом сервиса. Файл оркестрации находится здесь: [docker-compose.yaml](https://github.com/QIN2DIM/epic-awesome-gamer/blob/main/docker/docker-compose.yaml).
+Разумеется, можно использовать и команду `docker compose` напрямую — это даёт больше контроля над жизненным циклом сервиса. Файл оркестрации находится здесь: [docker-compose.yaml](https://github.com/Magerko/Epic-Claimer/blob/main/docker/docker-compose.yaml).
 
 ```bash
 # Запуск сервиса в фоне
@@ -76,7 +72,7 @@ docker compose up -d
 
 ### ☁️ Другие способы развёртывания (CI/CD)
 
-Если вы хотите встроить `epic-awesome-gamer` в автоматизированные конвейеры вроде `GitHub Actions` или `GitLab CI` — это вполне возможно!
+Если вы хотите встроить `Epic-Claimer` в автоматизированные конвейеры вроде `GitHub Actions` или `GitLab CI` — это вполне возможно!
 
 Основная логика проекта прозрачна, и при небольшой доработке её легко адаптировать под различные облачные задачи по расписанию. Будем рады, если вы поэкспериментируете и поделитесь результатами!
 

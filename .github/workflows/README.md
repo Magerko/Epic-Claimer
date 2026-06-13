@@ -1,4 +1,4 @@
-# Epic Awesome Gamer — GitHub Actions workflow
+# Epic-Claimer — GitHub Actions workflow
 
 > ⚡ **Быстрый старт**: следуя инструкции ниже, вы пройдёте путь от создания репозитория до первого запуска всего за 10 минут!
 
@@ -38,7 +38,7 @@
 
 1. **Создайте структуру каталогов**:
    - На главной странице репозитория нажмите «Add file» → «Create new file»
-   - В поле имени файла введите: `.github/workflows/epic-gamer.yml`
+   - В поле имени файла введите: `.github/workflows/epic-claimer.yml`
    - GitHub автоматически создаст нужную структуру каталогов
 
 2. **Вставьте содержимое workflow**:
@@ -46,10 +46,10 @@
    - Нажмите «Commit new file» внизу страницы
 
 <details>
-<summary>📄 Нажмите, чтобы развернуть полное содержимое файла workflow (epic-gamer.yml)</summary>
+<summary>📄 Нажмите, чтобы развернуть полное содержимое файла workflow (epic-claimer.yml)</summary>
 
 ```yaml
-name: Epic Awesome Gamer
+name: Epic-Claimer
 
 on:
   # Ручной запуск
@@ -60,7 +60,7 @@ on:
     - cron: '55 15 * * *'
 
 jobs:
-  epic-gamer:
+  epic-claimer:
     runs-on: ubuntu-latest
     timeout-minutes: 15  # Лимит таймаута 15 минут
     
@@ -121,11 +121,11 @@ jobs:
           chmod -R 777 ${{ github.workspace }}/volumes
           
       # Запускаем контейнер
-      - name: Run Epic Awesome Gamer
+      - name: Run Epic-Claimer
         run: |
           docker run \
             --rm \
-            --name epic-awesome-gamer \
+            --name epic-claimer \
             --memory="4g" \
             --memory-swap="4g" \
             --shm-size="2gb" \
@@ -168,7 +168,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: epic-gamer-logs-${{ github.run_id }}
+          name: epic-claimer-logs-${{ github.run_id }}
           path: volumes/logs/
           retention-days: 7
           
@@ -177,7 +177,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: epic-gamer-runtime-${{ github.run_id }}
+          name: epic-claimer-runtime-${{ github.run_id }}
           path: volumes/runtime/
           retention-days: 7
 ```
@@ -238,7 +238,7 @@ jobs:
 
 1. Нажмите вкладку «Actions» вверху репозитория
 2. Если появится страница с предупреждением, нажмите «I understand my workflows, go ahead and enable them»
-3. Вы должны увидеть workflow «Epic Awesome Gamer»
+3. Вы должны увидеть workflow «Epic-Claimer»
 
 ### Шаг 7. Первый ручной запуск
 
@@ -248,7 +248,7 @@ jobs:
    - Нажмите вкладку «Actions» вверху репозитория
 
 2. **Выберите workflow**:
-   - В списке слева нажмите «Epic Awesome Gamer»
+   - В списке слева нажмите «Epic-Claimer»
 
 3. **Запустите вручную**:
    - Нажмите кнопку «Run workflow» справа
@@ -271,7 +271,7 @@ jobs:
 После первоначальной настройки вы можете запускать workflow вручную в любой момент:
 
 1. Перейдите на вкладку Actions
-2. Выберите workflow «Epic Awesome Gamer»
+2. Выберите workflow «Epic-Claimer»
 3. Нажмите «Run workflow»
 4. Выберите ветку (обычно main)
 5. Нажмите зелёную кнопку «Run workflow»
@@ -310,7 +310,7 @@ jobs:
 
 По умолчанию workflow поддерживает только ручной запуск. Чтобы включить автоматический запуск по расписанию, выполните следующие шаги:
 
-1. Откройте файл `.github/workflows/epic-gamer.yml`
+1. Откройте файл `.github/workflows/epic-claimer.yml`
 2. Найдите закомментированный блок schedule:
    ```yaml
    # schedule:

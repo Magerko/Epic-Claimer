@@ -1,4 +1,4 @@
-name: Epic Awesome Gamer
+name: Epic-Claimer
 
 on:
   # Manual trigger
@@ -9,7 +9,7 @@ on:
 #    - cron: '55 15 * * *'
 
 jobs:
-  epic-gamer:
+  epic-claimer:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -36,9 +36,9 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          
+
           git fetch origin --prune
-          
+
           if git ls-remote --exit-code --heads origin data-persistence >/dev/null 2>&1; then
             echo "Switching to existing data-persistence branch..."
             git checkout -B data-persistence origin/data-persistence
@@ -48,11 +48,11 @@ jobs:
             git push -u origin data-persistence
           fi
 
-      # Clone epic-awesome-gamer source code
-      - name: Clone epic-awesome-gamer repository
+      # Clone Epic-Claimer source code
+      - name: Clone Epic-Claimer repository
         run: |
-          echo "Cloning epic-awesome-gamer source code..."
-          git clone https://github.com/QIN2DIM/epic-awesome-gamer.git epic-gamer-src
+          echo "Cloning Epic-Claimer source code..."
+          git clone https://github.com/Magerko/Epic-Claimer.git epic-claimer-src
           echo "✅ Source code cloned successfully"
 
       - name: Install uv
@@ -64,7 +64,7 @@ jobs:
       - name: "Set up Python"
         uses: actions/setup-python@v5
         with:
-          python-version-file: "./epic-gamer-src/pyproject.toml"
+          python-version-file: "./epic-claimer-src/pyproject.toml"
 
       - name: Install system dependencies
         run: |
@@ -73,12 +73,12 @@ jobs:
 
       # Install dependencies
       - name: Install dependencies
-        working-directory: ./epic-gamer-src
+        working-directory: ./epic-claimer-src
         run: uv sync
 
       # Install Playwright browsers with retry logic
       - name: Install Playwright browsers
-        working-directory: ./epic-gamer-src
+        working-directory: ./epic-claimer-src
         run: |
           for i in {1..3}; do
             if uv run camoufox fetch; then
@@ -96,9 +96,9 @@ jobs:
             fi
           done
 
-      # Run Epic Awesome Gamer
-      - name: Run Epic Awesome Gamer
-        working-directory: ./epic-gamer-src
+      # Run Epic-Claimer
+      - name: Run Epic-Claimer
+        working-directory: ./epic-claimer-src
         env:
           EPIC_EMAIL: ${{ secrets.EPIC_EMAIL }}
           EPIC_PASSWORD: ${{ secrets.EPIC_PASSWORD }}
@@ -107,7 +107,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ENABLE_APSCHEDULER: false
         run: |
-          echo "Starting Epic Awesome Gamer..."
+          echo "Starting Epic-Claimer..."
           xvfb-run --auto-servernum --server-num=1 --server-args='-screen 0, 1920x1080x24' uv run app/deploy.py
           echo "Execution completed"
 
@@ -117,8 +117,8 @@ jobs:
         run: |
           echo "Copying generated volumes from source to current repository..."
           mkdir -p app/volumes
-          if [ -d "epic-gamer-src/app/volumes" ]; then
-            cp -r epic-gamer-src/app/volumes/* app/volumes/ 2>/dev/null || echo "No volumes content to copy"
+          if [ -d "epic-claimer-src/app/volumes" ]; then
+            cp -r epic-claimer-src/app/volumes/* app/volumes/ 2>/dev/null || echo "No volumes content to copy"
             echo "✅ Volumes copied successfully"
           else
             echo "⚠️ No volumes directory found in source"
@@ -136,30 +136,30 @@ jobs:
         if: always()
         run: |
           git checkout data-persistence
-          
+
           echo "Current git status:"
           git status
-          
+
           echo "Files in app/volumes:"
           find app/volumes -type f -name "*" 2>/dev/null || echo "No files in app/volumes"
-          
+
           git add app/volumes/ || true
-          
+
           if git diff --staged --quiet; then
             echo "✅ No changes to commit - volumes may be empty or unchanged"
           else
             TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
             CHANGED_FILES=$(git diff --staged --name-only | wc -l)
-          
+
             echo "📝 Committing $CHANGED_FILES changed files..."
-          
+
             git commit -m "🔄 Update persistence data - $TIMESTAMP" \
               -m "📊 Workflow run: ${{ github.run_id }}" \
               -m "🚀 Triggered by: ${{ github.event_name }}" \
               -m "📁 Files changed: $CHANGED_FILES" || {
               echo "⚠️ Commit failed, but continuing..."
             }
-          
+
             echo "📤 Pushing changes to remote..."
             for i in {1..3}; do
               if git push origin data-persistence; then
