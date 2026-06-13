@@ -2,10 +2,10 @@ name: epic-claimer
 
 services:
   epic-claimer:
-#    build:
-#      context: ..
-#      dockerfile: docker/Dockerfile
-    image: ghcr.io/qin2dim/epic-awesome-gamer:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: epic-claimer:latest
     restart: unless-stopped
     container_name: epic-claimer
     env_file:
