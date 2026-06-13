@@ -14,11 +14,12 @@
 
 ## Особенности
 
-✅ **Запуск по расписанию**: по умолчанию автоматически выполняется раз в день в 15:55 (UTC)
+✅ **Запуск из исходников**: workflow клонирует публичный код `Magerko/Epic-Claimer` и запускает его напрямую — без готового Docker-образа, всегда актуальная версия с вашими фичами (мульти-аккаунт, прокси)
+✅ **Опциональный запуск по расписанию**: раз в день в 15:55 (UTC); по умолчанию выключен, включается одной строкой
 ✅ **Ручной запуск**: поддерживается ручной запуск из интерфейса Actions
 ✅ **Проверка приватности репозитория**: workflow выполняется только в приватных репозиториях, что защищает ваш аккаунт
 ✅ **Сохранение данных**: данные пользователя хранятся в отдельной ветке, что обеспечивает сохранение состояния между запусками
-✅ **Защита по таймауту**: автоматический таймаут через 15 минут предотвращает бесконечное выполнение
+✅ **Защита по таймауту**: автоматический таймаут через 20 минут предотвращает бесконечное выполнение
 ✅ **Полные логи**: автоматическое сохранение логов и скриншотов
 
 ## Полная инструкция по настройке
@@ -54,16 +55,17 @@ name: Epic-Claimer
 on:
   # Ручной запуск
   workflow_dispatch:
-  
-  # Запуск по расписанию — раз в день в 15:55 (UTC)
-  schedule:
-    - cron: '55 15 * * *'
+
+  # Запуск по расписанию — раз в день в 15:55 (UTC).
+  # По умолчанию выключен; чтобы включить, раскомментируйте две строки ниже.
+#  schedule:
+#    - cron: '55 15 * * *'
 
 jobs:
   epic-claimer:
     runs-on: ubuntu-latest
-    timeout-minutes: 15  # Лимит таймаута 15 минут
-    
+    timeout-minutes: 20
+
     steps:
       # Проверяем, что репозиторий приватный
       - name: Check repository visibility
@@ -74,117 +76,151 @@ jobs:
             exit 0
           fi
           echo "✅ Running in private repository"
-      
-      # Получаем код
+
+      # Получаем приватный репозиторий (нужен для работы с веткой data-persistence)
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Полная история — нужна для операций с ветками
-          
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       # Создаём или переключаемся на ветку data-persistence
-      - name: Setup data-persistence branch
+      - name: Switch to data-persistence branch
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          
-          # Проверяем, существует ли удалённая ветка
-          if git ls-remote --heads origin data-persistence | grep -q data-persistence; then
-            echo "data-persistence branch exists, checking out..."
-            git checkout data-persistence
+
+          git fetch origin --prune
+
+          if git ls-remote --exit-code --heads origin data-persistence >/dev/null 2>&1; then
+            echo "Switching to existing data-persistence branch..."
+            git checkout -B data-persistence origin/data-persistence
           else
             echo "Creating new data-persistence branch..."
             git checkout -b data-persistence
-            
-            # Создаём необходимую структуру каталогов
-            mkdir -p volumes/user_data
-            mkdir -p volumes/logs
-            mkdir -p volumes/runtime
-            
-            # Создаём файлы .gitkeep, чтобы сохранить структуру каталогов
-            touch volumes/user_data/.gitkeep
-            touch volumes/logs/.gitkeep
-            touch volumes/runtime/.gitkeep
-            
-            # Коммитим начальную структуру
-            git add volumes/
-            git commit -m "Initialize persistence directories" || echo "No changes to commit"
             git push -u origin data-persistence
           fi
-      
-      # Готовим каталоги для сохранения данных
-      - name: Prepare volumes
+
+      # Клонируем исходный код Epic-Claimer из публичного репозитория
+      - name: Clone Epic-Claimer repository
         run: |
-          # Убеждаемся, что каталоги существуют и имеют нужные права
-          mkdir -p ${{ github.workspace }}/volumes/user_data
-          mkdir -p ${{ github.workspace }}/volumes/logs
-          mkdir -p ${{ github.workspace }}/volumes/runtime
-          chmod -R 777 ${{ github.workspace }}/volumes
-          
-      # Запускаем контейнер
+          echo "Cloning Epic-Claimer source code..."
+          git clone https://github.com/Magerko/Epic-Claimer.git epic-claimer-src
+          echo "✅ Source code cloned successfully"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          version: '0.8.0'
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "./epic-claimer-src/pyproject.toml"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libxml2-dev libxslt-dev
+
+      # Устанавливаем зависимости проекта
+      - name: Install dependencies
+        working-directory: ./epic-claimer-src
+        run: uv sync
+
+      # Устанавливаем браузер Camoufox (с повтором при сбое сети)
+      - name: Install Playwright browsers
+        working-directory: ./epic-claimer-src
+        run: |
+          for i in {1..3}; do
+            if uv run camoufox fetch; then
+              echo "✅ Camoufox fetch successful (attempt $i)"
+              break
+            else
+              echo "❌ Camoufox fetch attempt $i failed"
+              if [[ $i -lt 3 ]]; then
+                echo "⏳ Waiting 5 seconds before retry..."
+                sleep 5
+              else
+                echo "⚠️ All camoufox fetch attempts failed"
+                exit 1
+              fi
+            fi
+          done
+
+      # Запускаем Epic-Claimer из исходников
       - name: Run Epic-Claimer
+        working-directory: ./epic-claimer-src
+        env:
+          EPIC_EMAIL: ${{ secrets.EPIC_EMAIL }}
+          EPIC_PASSWORD: ${{ secrets.EPIC_PASSWORD }}
+          EPIC_ACCOUNTS: ${{ secrets.EPIC_ACCOUNTS }}
+          EPIC_PROXY: ${{ secrets.EPIC_PROXY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ENABLE_APSCHEDULER: false
         run: |
-          docker run \
-            --rm \
-            --name epic-claimer \
-            --memory="4g" \
-            --memory-swap="4g" \
-            --shm-size="2gb" \
-            -e EPIC_EMAIL="${{ secrets.EPIC_EMAIL }}" \
-            -e EPIC_PASSWORD="${{ secrets.EPIC_PASSWORD }}" \
-            -e GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
-            -v "${{ github.workspace }}/volumes/user_data:/app/app/volumes/user_data" \
-            -v "${{ github.workspace }}/volumes/logs:/app/app/volumes/logs" \
-            -v "${{ github.workspace }}/volumes/runtime:/app/app/volumes/runtime" \
-            --entrypoint "/usr/bin/tini" \
-            ghcr.io/qin2dim/epic-awesome-gamer:latest \
-            -- xvfb-run --auto-servernum --server-num=1 --server-args='-screen 0, 1920x1080x24' uv run app/deploy.py
-      
-      # Коммитим обновление сохранённых данных
+          echo "Starting Epic-Claimer..."
+          xvfb-run --auto-servernum --server-num=1 --server-args='-screen 0, 1920x1080x24' uv run app/deploy.py
+          echo "Execution completed"
+
+      # Копируем сгенерированные volumes из исходников в текущий репозиторий
+      - name: Copy generated volumes to current repository
+        if: always()
+        run: |
+          echo "Copying generated volumes from source to current repository..."
+          mkdir -p app/volumes
+          if [ -d "epic-claimer-src/app/volumes" ]; then
+            cp -r epic-claimer-src/app/volumes/* app/volumes/ 2>/dev/null || echo "No volumes content to copy"
+            echo "✅ Volumes copied successfully"
+          else
+            echo "⚠️ No volumes directory found in source"
+          fi
+
+      # Коммитим и пушим данные app/volumes в ветку data-persistence
       - name: Commit and push persistence data
         if: always()  # Сохраняем данные даже при ошибке задачи
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          
-          # Добавляем все изменения (включая логи)
-          git add volumes/ || true
-          
-          # Проверяем, есть ли изменения
+          git checkout data-persistence
+
+          git add app/volumes/ || true
+
           if git diff --staged --quiet; then
-            echo "No changes to commit"
+            echo "✅ No changes to commit"
           else
-            # Формируем сообщение коммита
             TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
             git commit -m "Update persistence data - $TIMESTAMP" \
               -m "Workflow run: ${{ github.run_id }}" \
               -m "Triggered by: ${{ github.event_name }}"
-            
-            # Пушим изменения
             git push origin data-persistence
           fi
-          
-      # Загружаем логи как Artifacts (для резервного хранения)
+
+      # Загружаем логи как Artifacts (для просмотра и резервного хранения)
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: epic-claimer-logs-${{ github.run_id }}
-          path: volumes/logs/
+          path: app/volumes/logs/
           retention-days: 7
-          
-      # Загружаем runtime-данные как Artifacts (для резервного хранения)
+          if-no-files-found: ignore
+
+      # Загружаем runtime-данные и скриншоты как Artifacts
       - name: Upload runtime data
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: epic-claimer-runtime-${{ github.run_id }}
-          path: volumes/runtime/
+          path: |
+            app/volumes/runtime/
+            app/volumes/screenshots/
           retention-days: 7
+          if-no-files-found: ignore
 ```
 
 </details>
 
-> ℹ️ **Примечание о путях монтирования**: пути в примере выше (`/app/app/volumes/...`) приведены в соответствие с актуальной структурой каталогов проекта (все рабочие данные складываются в `app/volumes/`). Если вы берёте workflow из более старых источников, проверьте, что тома смонтированы именно в `…/volumes/…`, иначе сохранение состояния между запусками работать не будет.
+> ℹ️ **Как работает сохранение данных**: workflow клонирует исходный код из публичного репозитория `Magerko/Epic-Claimer`, запускает его, а затем сохраняет рабочие данные (профиль браузера, логи, скриншоты) из `app/volumes/` в ветку `data-persistence` вашего приватного репозитория. Так состояние входа переживает перезапуски, а публичный код при этом остаётся неизменным.
 
 ### Шаг 3. Получите ключ Gemini API
 
@@ -210,7 +246,9 @@ jobs:
 > ```json
 > [{"email":"first@example.com","password":"pass1"},{"email":"second@example.com","password":"pass2"}]
 > ```
-> Аккаунты обрабатываются последовательно. Учтите 15-минутный таймаут workflow — при большом числе аккаунтов увеличьте `timeout-minutes` или используйте развёртывание через Docker Compose на сервере.
+> Аккаунты обрабатываются последовательно. Учтите 20-минутный таймаут workflow — при большом числе аккаунтов увеличьте `timeout-minutes` или используйте развёртывание через Docker Compose на сервере.
+
+> 🌐 **Прокси**: можно добавить Secret `EPIC_PROXY` (http/socks5) — он применится ко всем аккаунтам без собственного прокси. Прокси на конкретный аккаунт указывается полем `proxy` внутри `EPIC_ACCOUNTS`. Оба secret уже пробрасываются в workflow.
 
 **Подробные шаги добавления**:
 1. На странице репозитория нажмите вкладку «Settings» вверху
@@ -219,7 +257,7 @@ jobs:
 4. Введите имя Secret (например, `EPIC_EMAIL`)
 5. Введите соответствующее значение
 6. Нажмите «Add secret»
-7. Повторите шаги 3–6 для всех трёх Secrets
+7. Повторите шаги 3–6 для всех нужных Secrets
 
 ### Шаг 5. Настройте права workflow
 
@@ -258,7 +296,7 @@ jobs:
 4. **Следите за выполнением**:
    - Страница обновится и покажет новую запись о запуске
    - Нажмите на запись, чтобы посмотреть подробности выполнения
-   - Весь процесс занимает примерно 3–10 минут
+   - Весь процесс занимает примерно 5–15 минут (первый запуск дольше из-за установки зависимостей и загрузки браузера)
 
 5. **Проверьте результат**:
    - При успехе статус workflow будет зелёным ✅
@@ -313,8 +351,8 @@ jobs:
 1. Откройте файл `.github/workflows/epic-claimer.yml`
 2. Найдите закомментированный блок schedule:
    ```yaml
-   # schedule:
-   #   - cron: '55 15 * * *'
+   #  schedule:
+   #    - cron: '55 15 * * *'
    ```
 3. Уберите символы комментария, чтобы получилось:
    ```yaml
@@ -363,6 +401,6 @@ jobs:
 
 **В: Где хранятся данные?**
 О: Сохранённые данные хранятся в ветке `data-persistence`, включая:
-- `/volumes/user_data/` — данные пользователя и состояние входа
-- `/volumes/logs/` — логи запусков
-- `/volumes/runtime/` — runtime-данные и скриншоты
+- `app/volumes/user_data/` — данные пользователя и состояние входа
+- `app/volumes/logs/` — логи запусков
+- `app/volumes/runtime/` и `app/volumes/screenshots/` — runtime-данные и скриншоты
