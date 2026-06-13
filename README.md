@@ -1,5 +1,5 @@
 <div align="center">
-    <h1> EPIC 免费人</h1>
+    <h1> EPIC AWESOME GAMER</h1>
     <p>🍷 Изящно забирайте еженедельные бесплатные игры из Epic Games Store.</p>
     <img src="https://img.shields.io/static/v1?message=reference&color=blue&style=for-the-badge&logo=micropython&label=python">
     <img src="https://img.shields.io/github/license/QIN2DIM/epic-awesome-gamer?style=for-the-badge">
@@ -17,7 +17,7 @@
 
 ## Введение 👋
 
-[Epic 免费人](https://github.com/QIN2DIM/epic-awesome-gamer) помогает игрокам изящно забирать бесплатные игры. Встроенный AI-модуль [hcaptcha-challenger](https://github.com/QIN2DIM/hcaptcha-challenger) самостоятельно проходит проверки «человек / робот» (hCaptcha).
+[Epic Awesome Gamer](https://github.com/QIN2DIM/epic-awesome-gamer) помогает игрокам изящно забирать бесплатные игры. Встроенный AI-модуль [hcaptcha-challenger](https://github.com/QIN2DIM/hcaptcha-challenger) самостоятельно проходит проверки «человек / робот» (hCaptcha).
 
 ## Возможности
 
@@ -91,6 +91,7 @@ docker compose up -d
 | `EPIC_EMAIL`     | **ДА**\* | Ваш аккаунт Epic Games.<br>⚠️ **Внимание**: предварительно отключите для аккаунта двухфакторную аутентификацию (2FA). |
 | `EPIC_PASSWORD`  | **ДА**\* | Пароль от вашего аккаунта Epic Games.<br>⚠️ **Внимание**: то же самое — убедитесь, что 2FA отключена. |
 | `EPIC_ACCOUNTS`  | нет | Несколько аккаунтов в формате JSON-массива. Если задана, имеет приоритет над `EPIC_EMAIL`/`EPIC_PASSWORD`. См. раздел [**👥 Несколько аккаунтов**](#-несколько-аккаунтов). |
+| `EPIC_PROXY`     | нет | Прокси по умолчанию для аккаунтов без собственного `proxy` (http/socks5). См. раздел [**🌐 Прокси**](#-прокси). |
 | `GEMINI_API_KEY` | **ДА**  | Ключ для доступа к мультимодальной модели Google Gemini Pro Vision, которая решает проверки **«человек / робот» (hCaptcha)** при входе.<br>Получить ключ можно бесплатно в [Google AI Studio](https://aistudio.google.com/apikey); бесплатного лимита с запасом хватает для повседневного использования. |
 
 > \* `EPIC_EMAIL` и `EPIC_PASSWORD` обязательны, если вы **не** используете `EPIC_ACCOUNTS`. Нужно указать либо одно, либо другое.
@@ -116,6 +117,32 @@ EPIC_ACCOUNTS=[{"email":"first@example.com","password":"pass1"},{"email":"second
 
 > [!WARNING]
 > Чем больше аккаунтов, тем дольше один прогон. Учитывайте это при выборе расписания и при ограничении по времени (например, 15-минутный таймаут в GitHub Actions может не успеть обработать много аккаунтов — для большого числа используйте Docker Compose на сервере).
+
+### 🌐 Прокси
+
+Каждый аккаунт может ходить к Epic через собственный прокси — это важно при работе с несколькими аккаунтами, чтобы они не «светились» с одного IP сервера, а также помогает с репутацией IP при решении hCaptcha.
+
+Поддерживаются `http` и `socks5`, с авторизацией и без. Прокси можно задать двумя способами:
+
+- **Глобально** — переменная `EPIC_PROXY`, применяется ко всем аккаунтам, у которых нет своего:
+
+  ```dotenv
+  EPIC_PROXY=http://user:pass@host:port
+  ```
+
+- **На каждый аккаунт** — поле `proxy` внутри `EPIC_ACCOUNTS` (имеет приоритет над `EPIC_PROXY`):
+
+  ```dotenv
+  EPIC_ACCOUNTS=[{"email":"a@example.com","password":"p1","proxy":"socks5://user:pass@host1:1080"},{"email":"b@example.com","password":"p2","proxy":"socks5://user:pass@host2:1080"}]
+  ```
+
+Как это работает:
+
+- Когда прокси задан, Camoufox автоматически включает `geoip` — подгоняет **часовой пояс, локаль и геолокацию под IP прокси**. Без этого согласования прокси наоборот выглядит подозрительно, поэтому это делается за вас.
+- Приоритет: `proxy` аккаунта → затем `EPIC_PROXY` → затем без прокси.
+
+> [!WARNING]
+> **Качество прокси решает всё.** Дешёвые датацентровые прокси часто уже в чёрных списках Epic/hCaptcha — с ними может быть хуже, чем без прокси. Для этой задачи подходят резидентные или мобильные прокси.
 
 ### 🖼️ Галерея
 

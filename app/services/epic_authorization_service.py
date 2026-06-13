@@ -47,7 +47,7 @@ class EpicAuthorization:
 
     async def _handle_right_account_validation(self):
         """
-        以下验证仅会在登录成功后出现
+        These validations only appear after a successful login
         Returns:
 
         """
@@ -55,7 +55,7 @@ class EpicAuthorization:
 
         btn_ids = ["#link-success", "#login-reminder-prompt-setup-tfa-skip", "#yes"]
 
-        # == 账号长期不登录需要做的额外验证 == #
+        # == Extra validation required when the account has not logged in for a long time == #
 
         while self._is_refresh_csrf_signal.empty() and btn_ids:
             await self.page.wait_for_timeout(500)
@@ -68,7 +68,7 @@ class EpicAuthorization:
                     btn_ids.remove(action)
 
     async def _login(self) -> bool | None:
-        # 尽可能早地初始化机器人
+        # Initialize the agent as early as possible
         agent = AgentV(page=self.page, agent_config=settings)
 
         # {{< SIGN IN PAGE >}}
@@ -78,20 +78,20 @@ class EpicAuthorization:
             point_url = "https://www.epicgames.com/account/personal?lang=en-US&productName=egs&sessionInvalidated=true"
             await self.page.goto(point_url, wait_until="domcontentloaded")
 
-            # 1. 使用电子邮件地址登录
+            # 1. Sign in with the email address
             email_input = self.page.locator("#email")
             await email_input.clear()
             await email_input.type(self.account.email)
 
-            # 2. 点击继续按钮
+            # 2. Click the continue button
             await self.page.click("#continue")
 
-            # 3. 输入密码
+            # 3. Enter the password
             password_input = self.page.locator("#password")
             await password_input.clear()
             await password_input.type(self.account.password.get_secret_value())
 
-            # 4. 点击登录按钮，触发人机挑战值守监听器
+            # 4. Click sign-in, which arms the hCaptcha challenge listener
             # Active hCaptcha checkbox
             await self.page.click("#sign-in")
 

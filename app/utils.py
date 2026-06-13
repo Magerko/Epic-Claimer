@@ -13,13 +13,13 @@ from loguru import logger
 
 
 def timezone_filter(record):
-    """为日志记录添加东八区时区信息"""
+    """Attach UTC+8 (Asia/Shanghai) timezone info to log records"""
     record["time"] = record["time"].astimezone(ZoneInfo("Asia/Shanghai"))
     return record
 
 
 def init_log(**sink_channel):
-    # 从环境变量中读取日志级别，默认值为 "DEBUG"
+    # Read the log level from the environment, default "DEBUG"
     log_level = os.getenv("LOG_LEVEL", "DEBUG").upper()
 
     persistent_format = (
@@ -36,7 +36,7 @@ def init_log(**sink_channel):
         "<n>{message}</n>"
     )
 
-    # 配置 loguru 日志记录器
+    # Configure the loguru logger
     logger.remove()
     logger.add(
         sink=sys.stdout,

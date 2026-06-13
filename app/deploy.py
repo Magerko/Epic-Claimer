@@ -56,10 +56,16 @@ async def execute_browser_tasks(account: EpicAccount, headless: bool = True):
     """
     logger.debug(f"Starting Epic Games collection task for {account.email}")
 
+    proxy = settings.proxy_for(account)
+    if proxy:
+        logger.debug(f"Routing {account.email} through proxy {proxy['server']}")
+
     # Configure browser with anti-detection features and video recording
     async with AsyncCamoufox(
         persistent_context=True,
         user_data_dir=settings.user_data_dir_for(account.email),
+        proxy=proxy,
+        geoip=bool(proxy),
         screen=Screen(max_width=1920, max_height=1080, min_height=1080, min_width=1920),
         record_video_dir=RECORD_DIR,
         record_video_size=ViewportSize(width=1920, height=1080),

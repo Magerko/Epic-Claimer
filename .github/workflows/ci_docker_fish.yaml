@@ -1,13 +1,13 @@
 name: Docker Build and Release
 
-# 触发器：仅当一个新的 Release 被发布时运行
+# Trigger: run only when a new Release is published
 on:
   release:
     types: [published]
 
 env:
   REGISTRY: ghcr.io
-  # ${{ github.repository }} 会自动解析为 "owner/repo-name"
+  # ${{ github.repository }} resolves to "owner/repo-name"
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
@@ -15,12 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # packages: write 是推送到 GitHub Container Registry (ghcr.io) 所需的权限
+      # packages: write is required to push to the GitHub Container Registry (ghcr.io)
       packages: write
 
     steps:
     - name: Checkout repository
-      # 此步骤会检出与发布的 Release 相关联的那个 Git 标签的代码
+      # Checks out the code for the Git tag associated with the published Release
       uses: actions/checkout@v4
 
     - name: Set up Docker Buildx
@@ -39,16 +39,16 @@ jobs:
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
-          # 从 Git 标签中提取 SemVer 版本号 (e.g., v1.2.3 -> 1.2.3, 1.2, 1)
-          # 这是 Release 流程的核心
+          # Extract the SemVer version from the Git tag (e.g., v1.2.3 -> 1.2.3, 1.2, 1)
+          # This is the core of the Release flow
           type=semver,pattern={{version}}
           type=semver,pattern={{major}}.{{minor}}
           type=semver,pattern={{major}}
 
-          # 添加一个基于 commit SHA 的短标签，用于精确追踪
+          # Add a short commit-SHA tag for precise tracking
           type=sha,format=short
 
-          # 仅当发布的 Release 不是预发布版本 (pre-release) 时，才添加 "latest" 标签
+          # Add the "latest" tag only when the Release is not a pre-release
           type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
 
     - name: Build and push Docker image
@@ -56,7 +56,7 @@ jobs:
       with:
         context: .
         file: ./docker/Dockerfile
-        # 由于此工作流只在 Release 时运行，我们总是希望推送镜像
+        # This workflow only runs on Release, so we always want to push the image
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}

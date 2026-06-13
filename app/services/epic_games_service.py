@@ -2,7 +2,7 @@
 # Time       : 2022/1/16 0:25
 # Author     : QIN2DIM
 # GitHub     : https://github.com/QIN2DIM
-# Description: 游戏商城控制句柄
+# Description: Game store control handle
 
 import json
 from contextlib import suppress
@@ -35,10 +35,10 @@ URL_PRODUCT_BUNDLES = "https://store.epicgames.com/en-US/bundles/"
 
 def get_promotions() -> List[PromotionGame]:
     """
-    获取周免游戏数据
+    Fetch weekly free game data
 
-    <即将推出> promotion["promotions"]["upcomingPromotionalOffers"]
-    <本周免费> promotion["promotions"]["promotionalOffers"]
+    <upcoming> promotion["promotions"]["upcomingPromotionalOffers"]
+    <this week free> promotion["promotions"]["promotionalOffers"]
     :return: {"pageLink1": "pageTitle1", "pageLink2": "pageTitle2", ...}
     """
 
@@ -103,7 +103,7 @@ class EpicAgent:
         self._cookies = None
 
     async def _sync_order_history(self):
-        """获取最近的订单纪录"""
+        """Fetch the most recent order history"""
         if self._orders:
             return
 
@@ -127,41 +127,41 @@ class EpicAgent:
         self._orders = completed_orders
 
     async def _check_orders(self):
-        # 获取玩家历史交易订单
-        # 运行该操作之前必须确保账号信息有效
+        # Fetch the player's historical purchase orders
+        # Account credentials must be valid before running this
         await self._sync_order_history()
 
         self._namespaces = self._namespaces or [order.namespace for order in self._orders]
 
-        # 获取本周促销数据
-        # 正交数据，得到还未收集的优惠商品
+        # Fetch this week's promotion data
+        # Diff against owned items to keep only promotions not yet collected
         self._promotions = [p for p in get_promotions() if p.namespace not in self._namespaces]
 
     async def _should_ignore_task(self) -> bool:
         self._ctx_cookies_is_available = False
 
-        # 判断浏览器是否已缓存账号令牌信息
+        # Check whether the browser already cached the account token
         await self.page.goto(URL_CLAIM, wait_until="domcontentloaded")
 
-        # == 令牌过期 == #
+        # == token expired == #
         status = await self.page.locator("//egs-navigation").get_attribute("isloggedin")
         if status == "false":
             logger.error("❌ context cookies is not available")
             return False
 
-        # == 令牌有效 == #
+        # == token valid == #
 
-        # 浏览器的身份信息仍然有效
+        # Browser identity is still valid
         self._ctx_cookies_is_available = True
 
-        # 加载正交的优惠商品数据
+        # Load the not-yet-collected promotions
         await self._check_orders()
 
-        # 促销列表为空，说明免费游戏都已收集，任务结束
+        # Empty promotions list means all free games are collected, task done
         if not self._promotions:
             return True
 
-        # 账号信息有效，但还存在没有领完的游戏
+        # Account is valid but some free games are still unclaimed
         return False
 
     async def collect_epic_games(self):
@@ -169,11 +169,11 @@ class EpicAgent:
             logger.success("All week-free games are already in the library")
             return
 
-        # 刷新浏览器身份信息
+        # Refresh browser identity
         if not self._ctx_cookies_is_available:
             return
 
-        # 加载正交的优惠商品数据
+        # Load the not-yet-collected promotions
         if not self._promotions:
             await self._check_orders()
 
@@ -191,14 +191,14 @@ class EpicAgent:
             else:
                 game_promotions.append(p)
 
-        # 收集优惠游戏
+        # Collect promotional games
         if game_promotions:
             try:
                 await self.epic_games.collect_weekly_games(game_promotions)
             except Exception as e:
                 logger.exception(e)
 
-        # 收集游戏捆绑内容
+        # Collect game bundle content
         if bundle_promotions:
             logger.debug("Skip the game bundled content")
 
@@ -259,7 +259,7 @@ class EpicGames:
             # with suppress(TimeoutError):
             #     await page.click("//button//span[text()='Continue']", timeout=3000)
 
-            # 检查游戏是否已在库
+            # Check whether the game is already in the library
             btn_list = page.locator("//aside//button")
             aside_btn_count = await btn_list.count()
             texts = ""
@@ -272,14 +272,14 @@ class EpicGames:
                 logger.success(f"Already in the library - {url=}")
                 continue
 
-            # 检查是否为免费游戏
+            # Check whether the game is free
             purchase_btn = page.locator("//aside//button[@data-testid='purchase-cta-button']")
             purchase_status = await purchase_btn.text_content()
             if "Buy Now" in purchase_status or "Get" not in purchase_status:
                 logger.warning(f"Not available for purchase - {url=}")
                 continue
 
-            # 将免费游戏添加至购物车
+            # Add the free game to the cart
             add_to_cart_btn = page.locator("//aside//button[@data-testid='add-to-cart-cta-button']")
             try:
                 text = await add_to_cart_btn.text_content()

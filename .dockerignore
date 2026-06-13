@@ -1,8 +1,8 @@
-# Git相关
+# Git
 .git
 .gitignore
 
-# Python相关
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -14,12 +14,12 @@ env/
 .env.*
 .envrc
 
-# IDE相关
+# IDE
 .idea/
 .vscode/
 .vs/
 
-# 缓存和临时文件
+# Cache and temp files
 .cache/
 .pytest_cache/
 .coverage
@@ -28,28 +28,28 @@ env/
 .tox/
 .nox/
 
-# 开发工具
+# Dev tools
 .python-version
 .editorconfig
 
-# 日志文件
+# Log files
 *.log
 logs/
 app/logs/
 
-# 构建产物
+# Build artifacts
 dist/
 build/
 *.egg-info/
 .pybuilder/
 target/
 
-# 文档
+# Docs
 #README.md
 #LICENSE
 #*.md
 
-# 测试相关
+# Tests
 .hypothesis/
 htmlcov/
 cover/
@@ -58,13 +58,13 @@ coverage.xml
 *.cover
 *.py.cover
 
-# 临时文件
+# Temp files
 .DS_Store
 Thumbs.db
 *.tmp
 *.temp
 
-# Docker相关
+# Docker
 docker/
 examples/
 .dockerignore

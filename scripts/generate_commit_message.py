@@ -219,7 +219,7 @@ class GitCommitGenerator:
 
     def _call_llm_api(self, llm_input: LLMInput) -> CommitMessage | None:
         """
-        调用 Dify Workflow 中的快捷指令，跳过意图识别触发特性分支。
+        Invoke the shortcut command in the Dify Workflow, skipping intent recognition.
         Args:
             llm_input:
 

@@ -103,6 +103,7 @@ jobs:
           EPIC_EMAIL: ${{ secrets.EPIC_EMAIL }}
           EPIC_PASSWORD: ${{ secrets.EPIC_PASSWORD }}
           EPIC_ACCOUNTS: ${{ secrets.EPIC_ACCOUNTS }}
+          EPIC_PROXY: ${{ secrets.EPIC_PROXY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ENABLE_APSCHEDULER: false
         run: |
