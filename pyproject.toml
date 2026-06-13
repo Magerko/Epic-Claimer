@@ -1,5 +1,5 @@
 [project]
-name = "epic-awesome-gamer"
+name = "epic-claimer"
 version = "0.4.1"
 dependencies = [
     "apscheduler>=3.11.0",
