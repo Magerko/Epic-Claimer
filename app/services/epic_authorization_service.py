@@ -90,7 +90,7 @@ class EpicAuthorization:
             await self.page.screenshot(path=sr.joinpath(f"login-{int(time.time())}.png"))
             return None
 
-    async def invoke(self):
+    async def invoke(self) -> bool:
         self.page.on("response", self._on_response_anything)
 
         for _ in range(3):
@@ -99,4 +99,5 @@ class EpicAuthorization:
                 logger.success("Epic Games is already logged in")
                 return True
             if await self._login():
-                return
+                return True
+        return False

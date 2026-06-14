@@ -149,6 +149,17 @@ SCHEDULE_TIMEZONE=Europe/Kyiv
 > [!NOTE]
 > В `docker-compose.yaml` стоит `restart: unless-stopped`. Это правильно для режима сервера (`ENABLE_APSCHEDULER=true`): контейнер живёт постоянно и переживает перезагрузку. Если хотите **одноразовый** прогон, поставьте `ENABLE_APSCHEDULER=false` **и** `restart: "no"` (иначе после выхода контейнер будет перезапускаться по кругу).
 
+### Уведомления в Telegram (необязательно)
+
+Чтобы получать алерты, когда игра забрана или прогон упал (не удалось войти / ошибка аккаунта), подключите бота:
+
+```dotenv
+TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
+TELEGRAM_CHAT_ID=123456789
+```
+
+Токен бота — у [@BotFather](https://t.me/BotFather), свой `chat_id` — например, через [@userinfobot](https://t.me/userinfobot). Если переменные не заданы — уведомления просто выключены.
+
 Остальные переменные в `.env.example` — тонкая настройка `hcaptcha-challenger`; обычно их трогать не нужно.
 
 ---

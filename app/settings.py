@@ -16,7 +16,6 @@ USER_DATA_DIR = VOLUMES_DIR.joinpath("user_data")
 
 RUNTIME_DIR = VOLUMES_DIR.joinpath("runtime")
 SCREENSHOTS_DIR = VOLUMES_DIR.joinpath("screenshots")
-RECORD_DIR = VOLUMES_DIR.joinpath("record")
 HCAPTCHA_DIR = VOLUMES_DIR.joinpath("hcaptcha")
 
 
@@ -87,6 +86,14 @@ class EpicSettings(AgentConfig):
 
     SCHEDULE_TIMEZONE: str = Field(
         default="UTC", description="Timezone for the cron schedule and log timestamps"
+    )
+
+    TELEGRAM_BOT_TOKEN: str | None = Field(
+        default=None, description="Telegram bot token for notifications (optional)"
+    )
+
+    TELEGRAM_CHAT_ID: str | None = Field(
+        default=None, description="Telegram chat id to notify (optional)"
     )
 
     TASK_TIMEOUT_SECONDS: int = Field(

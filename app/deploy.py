@@ -12,12 +12,12 @@ from apscheduler.triggers.cron import CronTrigger
 from browserforge.fingerprints import Screen
 from camoufox import AsyncCamoufox
 from loguru import logger
-from playwright.async_api import ViewportSize
 from pytz import timezone
 
+from notify import notify
 from services.epic_authorization_service import EpicAuthorization
 from services.epic_games_service import EpicAgent
-from settings import LOG_DIR, RECORD_DIR
+from settings import LOG_DIR
 from settings import settings, EpicAccount
 from utils import init_log
 
@@ -33,7 +33,6 @@ except Exception:
     TIMEZONE = timezone("UTC")
 
 
-@logger.catch
 async def execute_browser_tasks(account: EpicAccount, headless: bool = True):
     """Authenticate one account and claim its available free games."""
     logger.debug(f"Processing {account.email}")
@@ -48,14 +47,15 @@ async def execute_browser_tasks(account: EpicAccount, headless: bool = True):
         proxy=proxy,
         geoip=bool(proxy),
         screen=Screen(max_width=1920, max_height=1080, min_height=1080, min_width=1920),
-        record_video_dir=RECORD_DIR,
-        record_video_size=ViewportSize(width=1920, height=1080),
         humanize=0.2,
         headless=headless,
     ) as browser:
         page = browser.pages[0] if browser.pages else await browser.new_page()
 
-        await EpicAuthorization(page, account).invoke()
+        if not await EpicAuthorization(page, account).invoke():
+            logger.error(f"Login failed for {account.email}")
+            await notify(f"❌ Epic-Claimer: не удалось войти ({account.email})")
+            return
 
         game_page = await browser.new_page()
         await EpicAgent(game_page).collect_epic_games()
@@ -81,6 +81,7 @@ async def run_all_accounts(headless: bool = True):
             await execute_browser_tasks(account, headless=headless)
         except Exception as e:
             logger.exception(f"Account {account.email} failed: {e}")
+            await notify(f"❌ Epic-Claimer: аккаунт {account.email} — ошибка: {e}")
 
 
 async def deploy():

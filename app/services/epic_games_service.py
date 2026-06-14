@@ -16,6 +16,7 @@ from playwright.async_api import TimeoutError
 from models import OrderItem, Order
 from models import PromotionGame
 from settings import settings, RUNTIME_DIR, SCREENSHOTS_DIR
+from notify import notify
 
 URL_CLAIM = "https://store.epicgames.com/en-US/free-games"
 URL_PROMOTIONS = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions"
@@ -181,7 +182,8 @@ class EpicGames:
             slug = url.rstrip("/").split("/")[-1]
             await page.screenshot(path=str(sr.joinpath(f"{slug}-{tag}-{int(time.time())}.png")))
 
-    async def _claim_one(self, url: str, agent: AgentV) -> None:
+    async def _claim_one(self, promo: PromotionGame, agent: AgentV) -> None:
+        url = promo.url
         page = self.page
         logger.debug(f"Claiming {url}")
         await page.goto(url, wait_until="load")
@@ -220,6 +222,7 @@ class EpicGames:
             status = (await cta.text_content(timeout=8000) or "").strip()
             if any(s in status for s in ("In Library", "Owned", "Manage")):
                 logger.success(f"🎉 Claimed - {url}")
+                await notify(f"🎉 Epic-Claimer: забрал игру «{promo.title}»")
                 return
 
         await self._screenshot(page, url, "unconfirmed")
@@ -229,6 +232,6 @@ class EpicGames:
         agent = AgentV(page=self.page, agent_config=settings)
         for p in promotions:
             try:
-                await self._claim_one(p.url, agent)
+                await self._claim_one(p, agent)
             except Exception as err:
                 logger.warning(f"Failed to claim {p.url} - {err}")
