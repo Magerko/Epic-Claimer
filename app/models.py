@@ -1,8 +1,4 @@
-# -*- coding: utf-8 -*-
-# Time       : 2023/8/14 23:16
-# Author     : QIN2DIM
-# GitHub     : https://github.com/QIN2DIM
-# Description:
+"""Pydantic models for Epic order history and weekly promotions."""
 
 from typing import List
 
@@ -19,11 +15,6 @@ class Order(BaseModel):
     orderType: str
     orderId: str
     items: List[OrderItem] = Field(default_factory=list)
-
-
-class CompletedOrder(BaseModel):
-    offerId: str
-    namespace: str
 
 
 class PromotionGame(BaseModel):

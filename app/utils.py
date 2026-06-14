@@ -1,8 +1,4 @@
-# -*- coding: utf-8 -*-
-# Time       : 2023/8/19 17:19
-# Author     : QIN2DIM
-# GitHub     : https://github.com/QIN2DIM
-# Description:
+"""Loguru logging setup: colored stdout plus rotating file sinks."""
 from __future__ import annotations
 
 import os
@@ -26,7 +22,6 @@ def init_log(**sink_channel):
     except (AttributeError, ValueError):
         pass
 
-    # Read the log level from the environment, default "DEBUG"
     log_level = os.getenv("LOG_LEVEL", "DEBUG").upper()
 
     persistent_format = (
@@ -43,7 +38,6 @@ def init_log(**sink_channel):
         "<n>{message}</n>"
     )
 
-    # Configure the loguru logger
     logger.remove()
     logger.add(
         sink=sys.stdout,

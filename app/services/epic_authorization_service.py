@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-@Time    : 2025/7/16 22:13
-@Author  : QIN2DIM
-@GitHub  : https://github.com/QIN2DIM
-@Desc    :
-"""
+"""Epic Games sign-in: reuse a cached session when present, otherwise log in and
+solve the hCaptcha challenge."""
+
 import asyncio
-import json
 import time
 from contextlib import suppress
 
@@ -34,76 +29,59 @@ class EpicAuthorization:
 
         with suppress(Exception):
             result = await r.json()
-            result_json = json.dumps(result, indent=2, ensure_ascii=False)
-
             if "/id/api/login" in r.url and result.get("errorCode"):
-                logger.error(f"{r.request.method} {r.url} - {result_json}")
+                logger.error(f"Login error: {result.get('errorCode')}")
             elif "/id/api/analytics" in r.url and result.get("accountId"):
                 self._is_login_success_signal.put_nowait(result)
-            elif "/account/v2/refresh-csrf" in r.url and result.get("success", False) is True:
+            elif "/account/v2/refresh-csrf" in r.url and result.get("success") is True:
                 self._is_refresh_csrf_signal.put_nowait(result)
-            # else:
-            #     logger.debug(f"{r.request.method} {r.url} - {result_json}")
 
-    async def _handle_right_account_validation(self):
-        """
-        These validations only appear after a successful login
-        Returns:
+    async def _dismiss_post_login_prompts(self):
+        """Click through the optional prompts Epic shows right after sign-in (the
+        security check, the "set up 2FA" offer, etc.) until the account page settles.
 
+        #login-reminder-prompt-setup-tfa-skip is the button that declines the 2FA setup.
         """
         await self.page.goto("https://www.epicgames.com/account/personal", wait_until="networkidle")
 
-        btn_ids = ["#link-success", "#login-reminder-prompt-setup-tfa-skip", "#yes"]
-
-        # == Extra validation required when the account has not logged in for a long time == #
-
-        while self._is_refresh_csrf_signal.empty() and btn_ids:
+        buttons = ["#link-success", "#login-reminder-prompt-setup-tfa-skip", "#yes"]
+        while self._is_refresh_csrf_signal.empty() and buttons:
             await self.page.wait_for_timeout(500)
-            action_chains = btn_ids.copy()
-            for action in action_chains:
+            for selector in buttons.copy():
                 with suppress(Exception):
-                    reminder_btn = self.page.locator(action)
-                    await expect(reminder_btn).to_be_visible(timeout=1000)
-                    await reminder_btn.click(timeout=1000)
-                    btn_ids.remove(action)
+                    button = self.page.locator(selector)
+                    await expect(button).to_be_visible(timeout=1000)
+                    await button.click(timeout=1000)
+                    buttons.remove(selector)
 
     async def _login(self) -> bool | None:
-        # Initialize the agent as early as possible
         agent = AgentV(page=self.page, agent_config=settings)
-
-        # {{< SIGN IN PAGE >}}
         logger.debug("Login with Email")
 
         try:
-            point_url = "https://www.epicgames.com/account/personal?lang=en-US&productName=egs&sessionInvalidated=true"
+            point_url = (
+                "https://www.epicgames.com/account/personal"
+                "?lang=en-US&productName=egs&sessionInvalidated=true"
+            )
             await self.page.goto(point_url, wait_until="domcontentloaded")
 
-            # 1. Sign in with the email address
             email_input = self.page.locator("#email")
             await email_input.clear()
             await email_input.type(self.account.email)
-
-            # 2. Click the continue button
             await self.page.click("#continue")
 
-            # 3. Enter the password
             password_input = self.page.locator("#password")
             await password_input.clear()
             await password_input.type(self.account.password.get_secret_value())
 
-            # 4. Click sign-in, which arms the hCaptcha challenge listener
-            # Active hCaptcha checkbox
+            # Submitting arms the hCaptcha listener, which the agent then solves
             await self.page.click("#sign-in")
-
-            # Active hCaptcha challenge
             await agent.wait_for_challenge()
 
-            # Wait for the page to redirect
             await asyncio.wait_for(self._is_login_success_signal.get(), timeout=60)
             logger.success("Login success")
 
-            await asyncio.wait_for(self._handle_right_account_validation(), timeout=60)
-            logger.success("Right account validation success")
+            await asyncio.wait_for(self._dismiss_post_login_prompts(), timeout=60)
             return True
         except Exception as err:
             logger.warning(f"{err}")
@@ -117,10 +95,8 @@ class EpicAuthorization:
 
         for _ in range(3):
             await self.page.goto(URL_CLAIM, wait_until="domcontentloaded")
-
             if "true" == await self.page.locator("//egs-navigation").get_attribute("isloggedin"):
                 logger.success("Epic Games is already logged in")
                 return True
-
             if await self._login():
                 return
