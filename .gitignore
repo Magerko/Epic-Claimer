@@ -140,3 +140,4 @@ app/volumes
 
 # Local Claude Code settings
 .claude/
+CLAUDE.md
