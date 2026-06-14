@@ -75,3 +75,6 @@ tests/
 .devcontainer/
 tmp/
 app/tmp/
+
+# Runtime data (browser profiles, logs, recordings) — never bake into the image
+app/volumes/
