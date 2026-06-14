@@ -19,6 +19,13 @@ def timezone_filter(record):
 
 
 def init_log(**sink_channel):
+    # Make stdout tolerant of unicode (emojis, ×, non-ASCII) on legacy Windows
+    # consoles, where the default cp1251/cp1252 codec would crash the log handler.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except (AttributeError, ValueError):
+        pass
+
     # Read the log level from the environment, default "DEBUG"
     log_level = os.getenv("LOG_LEVEL", "DEBUG").upper()
 
