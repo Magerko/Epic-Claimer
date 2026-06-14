@@ -27,7 +27,10 @@ init_log(
     serialize=LOG_DIR.joinpath("serialize.log"),
 )
 
-TIMEZONE = timezone("Asia/Shanghai")
+try:
+    TIMEZONE = timezone(settings.SCHEDULE_TIMEZONE)
+except Exception:
+    TIMEZONE = timezone("UTC")
 
 
 @logger.catch
@@ -98,26 +101,20 @@ async def deploy():
         logger.debug("Scheduler disabled, done")
         return
 
-    scheduler = AsyncIOScheduler()
+    try:
+        trigger = CronTrigger.from_crontab(
+            settings.CRON_SCHEDULE, timezone=settings.SCHEDULE_TIMEZONE
+        )
+    except Exception as e:
+        logger.error(f"Invalid CRON_SCHEDULE {settings.CRON_SCHEDULE!r}: {e}")
+        return
 
-    # Free games rotate on Thursdays, so retry hourly across the changeover window,
-    # plus a daily safety net at noon. Times are Beijing time (UTC+8).
+    scheduler = AsyncIOScheduler()
     scheduler.add_job(
         run_all_accounts,
-        trigger=CronTrigger(
-            day_of_week="thu", hour="23,0,1,2,3", minute="30", timezone="Asia/Shanghai"
-        ),
-        id="weekly_epic_games_task",
-        name="weekly_epic_games_task",
-        args=[headless],
-        replace_existing=False,
-        max_instances=1,
-    )
-    scheduler.add_job(
-        run_all_accounts,
-        trigger=CronTrigger(hour="12", minute="0", timezone="Asia/Shanghai"),
-        id="daily_epic_games_task",
-        name="daily_epic_games_task",
+        trigger=trigger,
+        id="epic_games_task",
+        name="epic_games_task",
         args=[headless],
         replace_existing=False,
         max_instances=1,

@@ -9,9 +9,14 @@ from zoneinfo import ZoneInfo
 from loguru import logger
 
 
+try:
+    _LOG_TZ = ZoneInfo(os.getenv("SCHEDULE_TIMEZONE", "UTC"))
+except Exception:
+    _LOG_TZ = ZoneInfo("UTC")
+
+
 def timezone_filter(record):
-    """Attach UTC+8 (Asia/Shanghai) timezone info to log records"""
-    record["time"] = record["time"].astimezone(ZoneInfo("Asia/Shanghai"))
+    record["time"] = record["time"].astimezone(_LOG_TZ)
     return record
 
 

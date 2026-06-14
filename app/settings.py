@@ -80,6 +80,15 @@ class EpicSettings(AgentConfig):
         default=True, description="Keep running as a scheduler after the immediate run"
     )
 
+    CRON_SCHEDULE: str = Field(
+        default="30 12 * * *",
+        description="Cron expression for recurring runs when ENABLE_APSCHEDULER is true",
+    )
+
+    SCHEDULE_TIMEZONE: str = Field(
+        default="UTC", description="Timezone for the cron schedule and log timestamps"
+    )
+
     TASK_TIMEOUT_SECONDS: int = Field(
         default=900, description="Maximum execution time for browser tasks before force termination"
     )
