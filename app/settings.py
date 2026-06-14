@@ -1,4 +1,5 @@
 """Settings and per-account configuration loaded from the environment / .env."""
+
 from pathlib import Path
 from typing import List
 from urllib.parse import urlparse
@@ -80,8 +81,7 @@ class EpicSettings(AgentConfig):
     )
 
     TASK_TIMEOUT_SECONDS: int = Field(
-        default=900,
-        description="Maximum execution time for browser tasks before force termination",
+        default=900, description="Maximum execution time for browser tasks before force termination"
     )
 
     @property

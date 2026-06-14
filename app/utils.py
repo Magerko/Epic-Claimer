@@ -1,4 +1,5 @@
 """Loguru logging setup: colored stdout plus rotating file sinks."""
+
 from __future__ import annotations
 
 import os
